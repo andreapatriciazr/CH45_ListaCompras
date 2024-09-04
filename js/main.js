@@ -1,4 +1,5 @@
 const btnAgregar = document.getElementById("btnAgregar");
+const btnClear = document.getElementById("btnClear");
 const txtNombre = document.getElementById("Name");
 const txtNumber = document.getElementById("Number");
 const alertValidaciones = document.getElementById("alertValidaciones");
@@ -11,12 +12,14 @@ const precioTotal = document.getElementById("precioTotal");
 
 // Bandera, al ser true permite agregar los datos a la tabla
 let isValid = true; 
+
 // Las siguientes variables inicializan en 0
 let contador = 0;
 let precio = 0;
 let costoTotal = 0;
-let totalEnProductos =0;
+let totalEnProductos = 0;
 
+let datos = new Array (); // Pueden ser [] o escribir new Array();
 
 function validarCantidad(){
     // Condiciones para aceptar la cantidad ingresada
@@ -83,6 +86,16 @@ btnAgregar.addEventListener("click", function (event){
                     <td>${precio}</td>
                 </tr>`;
         // Contador = #, Nombre = Nombre, Number = Cantidad, Precio = Precio
+        
+        // Declara una variable llamada elemento 
+        let elemento = {"contador": contador, 
+                        "nombre": txtNombre.value,
+                        "cantidad": txtNumber.value,
+                        "precio": precio};
+
+        datos.push(elemento); // Añade la variable de elemento al arreglo vacío de datos por medio de push
+        localStorage.setItem("datos", JSON.stringify(datos)); // Convierte el arreglo de datos a JSON para poder almacenar en localStorage
+        
         cuerpoTabla.insertAdjacentHTML("beforeend", row); // Agregar los elementos en la tabla con posición beforeend 
         costoTotal += precio*Number(txtNumber.value); //  Actualiza el costo total acumulado sumando el costo de los productos añadidos
         totalEnProductos += Number(txtNumber.value); // Actualiza el total de productos en el carrito 
@@ -97,10 +110,43 @@ btnAgregar.addEventListener("click", function (event){
         
         txtNombre.value = ""; // Reestablecer campo nombre después de agregar para facilitar añadir nuevos elementos
         txtNumber.value = ""; // Reestablecer campo cantidad después de agregar 
-        txtNombre.focus();
+        txtNombre.focus(); // Manda el foco al campo nombre
     }
 
-}); // Aquí termina el evento agregar
+}); // Aquí termina el evento al botón agregar
+
+btnClear.addEventListener("click", function (event){
+    event.preventDefault(); // Se está evitando que la acción predeterminada del evento se ejecute
+    
+    txtNombre.value = "" // Limpiar el valor del nombre de los campos
+    txtNumber.value = "" // Limpiar el valor de cantidad de los campos
+   
+    // Limpiar los elementos del localStorage:
+    // localStorage.removeItem("contador");
+    // localStorage.removeItem("costoTotal");
+    // localStorage.removeItem("totalEnProductos");
+
+    localStorage.clear(); // Limpiar el localStorage
+    cuerpoTabla.innerHTML = ""; // Limpiar la tabla
+
+    // Reiniciar las variables: contador, costoTotal, totalEnProductos (no volver a poner let porque ya están definidas)
+    contador = 0;
+    costoTotal = 0;
+    totalEnProductos = 0;
+    
+    // Actualizar las variables:
+    contadorProductos.innerText = contador; // Actualizar el contenido de texto del elemento contadorProductos con el valor de la variable contador
+    productosTotal.innerText = totalEnProductos; // El contenido productosTotal se actualiza con el valor de totalEnProductos
+    precioTotal.innerText = "$ " + costoTotal.toFixed(2); // Actualizar el contenido costoTotal
+    
+    alertValidacionesTexto.innerHTML = ""; //Ocultar la alerta 
+    alertValidaciones.style.display = "none"; // Ocultar la alerta
+
+    txtNombre.style.border = ""; // Quitar el borde de estilos en nombre
+    txtNumber.style.border = ""; // Quitar el borde de estilos en cantidad
+    txtNombre.focus(); // Manda el foco al campo nombre
+
+}); // Aquí termina el evento al botón limpiar todo
 
 // Evento blue es cuando un campo pierde el foco, se sale del campo
 txtNombre.addEventListener("blur", function (event){
@@ -111,21 +157,41 @@ txtNombre.addEventListener("blur", function (event){
 //     txtNumber.value = txtNumber.value.trim();
 // });
 
+// Este código se usa para ejecutar la función proporcionada una vez que la página ha terminado de cargarse:
 window.addEventListener("load", function (){
-    if (this.localStorage.getItem("contador") != null){
-        contador = Number(this.localStorage.getItem("contador"));
+    if (this.localStorage.getItem("contador") != null){ // Verificar si hay un valor almacenado en localStorage bajo la clave "contador"
+        contador = Number(this.localStorage.getItem("contador")); // Obtener el valor asociado con la clave "contador",  Si existe no será null y el valor se convierte a un número usando Number(...) y se asigna a la variable contador
     }
 
-    if (this.localStorage.getItem("totalEnProductos") != null){
-        totalEnProductos = Number(this.localStorage.getItem("totalEnProductos"));
+    if (this.localStorage.getItem("totalEnProductos") != null){ // Verifica si hay un valor almacenado en localStorage bajo la clave "totalEnProductos"
+        totalEnProductos = Number(this.localStorage.getItem("totalEnProductos")); // Si existe el valor se convierte a un número y se asigna a la variable totalEnProductos
     }
     
-    if (this.localStorage.getItem("costoTotal") != null){
-        costoTotal = Number(this.localStorage.getItem("costoTotal"));
+    if (this.localStorage.getItem("costoTotal") != null){ // Verifica si hay un valor almacenado en localStorage bajo la clave "costoTotal"
+        costoTotal = Number(this.localStorage.getItem("costoTotal")); // Si existe el valor se convierte a un número y se asigna a la variable costoTotal
     }
 
-    contadorProductos.innerText = contador;
-    productosTotal.innerText = totalEnProductos;
-    precioTotal.innerText = "$ " + costoTotal.toFixed(2);
+    contadorProductos.innerText = contador; // Actualizar el contenido de texto del elemento con la variable contadorProductos con el valor de la variable contador
+    productosTotal.innerText = totalEnProductos; // El contenido de texto del elemento con la variable productosTotal se actualiza con el valor de la variable totalEnProductos
+    precioTotal.innerText = "$ " + costoTotal.toFixed(2); 
+    // Este último paso actualiza el contenido de texto del elemento con la variable precioTotal para mostrar el valor de costoTotal 
+    // en formato de moneda y costoTotal.toFixed(2) asegura que el número se muestre con dos decimales y el prefijo "$ " se agrega para mostrar el valor como una cantidad en pesos 
 
-});
+    if (this.localStorage.getItem("datos") != null){
+        datos = JSON.parse(this.localStorage.getItem("datos")); // Convierte la cadena JSON almacenada en localStorage de nuevo en arreglo
+    }
+    
+    datos.forEach(r => {
+        let row = `<tr>
+                        <td>${r.contador}</td>
+                        <td>${r.nombre}</td>
+                        <td>${r.cantidad}</td>
+                        <td>${r.precio}</td>
+                   </tr>`;
+        cuerpoTabla.insertAdjacentHTML("beforeend", row);
+    });
+    // datos.forEach(r => { ... }); Itera sobre cada objeto en el array datos
+    // Dentro del bucle forEach, construye una cadena de texto (row) que representa una fila de la tabla (<tr>) con cuatro celdas (<td>) y cada celda muestra un valor del objeto r
+    // cuerpoTabla.insertAdjacentHTML("beforeend", row); Inserta esta fila (row) al final del contenido de cuerpoTabla en el documento html
+
+}); // Aquí termina el evento para almacenar en localStorage
